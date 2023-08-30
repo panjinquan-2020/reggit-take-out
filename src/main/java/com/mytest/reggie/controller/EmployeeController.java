@@ -30,7 +30,7 @@ public class EmployeeController {
      * */
     @PostMapping("/login")
     /*
-    localhost:8080/employee/login post请求
+    localhost:8080/employee/login?username=***&password=*** post请求
     username,password 封装成employee json格式 需要将得到的用户信息存入网页中 传入HttpServletRequest 调用session
     前端接收数据需要employee 返回R<Employee>
     */
@@ -81,7 +81,7 @@ public class EmployeeController {
      * */
     @PostMapping
     /*
-    localhost:8080/employee post请求
+    localhost:8080/employee?idNumber=***&name=***&phone=***&sex=***&username=*** post请求
     idNumber,name,phone,sex,username 封装成employee json格式 需要获取当前的新增人，修改人信息 传入HttpSession 调用session
     前端返回只需要确认添加是否成功，返回R<String>
     */
@@ -89,10 +89,11 @@ public class EmployeeController {
         log.info("新增员工，员工信息：{}",employee.toString());
         //设置初始密码123456，需要进行mds加密
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
-        employee.setCreateTime(LocalDateTime.now());;
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setCreateUser((Long) session.getAttribute("employee"));
-        employee.setUpdateUser((Long) session.getAttribute("employee"));
+//        employee.setCreateTime(LocalDateTime.now());;
+//        employee.setUpdateTime(LocalDateTime.now());
+//        employee.setCreateUser((Long) session.getAttribute("employee"));
+//        employee.setUpdateUser((Long) session.getAttribute("employee"));
+        //由于公共字段填充太过繁琐，所以用一个自定义资源处理器来对于公共部分进行自动填充
         employeeService.save(employee);
         return R.success("新增员工成功");
         //账号已存在，数据库表中有唯一约束，抛出异常：java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '***' for key 'employee.idx_username'
@@ -108,7 +109,7 @@ public class EmployeeController {
      * */
     @GetMapping("/page")
     /*
-    localhost:8080/employee/page get请求
+    localhost:8080/employee/page?page=***&pagesize=***&name=*** get请求
     page,pagesize name可能会输入（有搜索框）
     由于分页采用的是mybatis-plus的分页方式，所以返回的类型为R<Page>
     */
@@ -133,14 +134,16 @@ public class EmployeeController {
      * */
     @PutMapping
     /*
-    localhost:8080/employee put请求
+    localhost:8080/employee?id=***&status=*** put请求
     id,status 封装成employee json格式 需要获取当前的新增人，修改人信息 传入HttpSession 调用session
     前端返回只需要确认添加是否成功，返回R<String>
     */
     public R<String> update(HttpSession session,@RequestBody Employee employee){
         log.info(employee.toString());
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser((Long) session.getAttribute("employee"));
+        long id = Thread.currentThread().getId();
+        log.info("线程id为:{}",id);
+//        employee.setUpdateTime(LocalDateTime.now());
+//        employee.setUpdateUser((Long) session.getAttribute("employee"));
         employeeService.updateById(employee);
         return R.success("员工信息修改成功");
     }
