@@ -1,4 +1,4 @@
-package com.mytest.reggie.service.impl;
+package com.mytest.reggie.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.mytest.reggie.entity.Employee;
