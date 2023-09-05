@@ -15,6 +15,7 @@ import javax.servlet.http.HttpSession;
 
 /**
  * @author PJQ
+ * 用户管理
  */
 @Slf4j
 @RestController
@@ -30,7 +31,7 @@ public class EmployeeController {
      * */
     @PostMapping("/login")
     /*
-    localhost:8080/employee/login?username=***&password=*** post请求
+    localhost:8080/employee/login post请求
     username,password 封装成employee json格式 需要将得到的用户信息存入网页中 传入HttpServletRequest 调用session
     前端接收数据需要employee 返回R<Employee>
     */
@@ -81,7 +82,7 @@ public class EmployeeController {
      * */
     @PostMapping
     /*
-    localhost:8080/employee?idNumber=***&name=***&phone=***&sex=***&username=*** post请求
+    localhost:8080/employee post请求
     idNumber,name,phone,sex,username 封装成employee json格式 需要获取当前的新增人，修改人信息 传入HttpSession 调用session
     前端返回只需要确认添加是否成功，返回R<String>
     */
@@ -134,7 +135,7 @@ public class EmployeeController {
      * */
     @PutMapping
     /*
-    localhost:8080/employee?id=***&status=*** put请求
+    localhost:8080/employee put请求
     id,status 封装成employee json格式 需要获取当前的新增人，修改人信息 传入HttpSession 调用session
     前端返回只需要确认添加是否成功，返回R<String>
     */

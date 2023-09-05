@@ -11,8 +11,11 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * @author PJQ
+ * 分类管理
  */
 @Slf4j
 @RestController
@@ -27,7 +30,7 @@ public class CategoryController {
      * */
     @PostMapping
     /*
-    localhost:8080/category?name=***&type=***&sort=*** post请求
+    localhost:8080/category post请求
     name,type,sort 封装成category json格式
     前端返回只需要确认添加是否成功，返回R<String>
     */
@@ -80,13 +83,13 @@ public class CategoryController {
     }
 
     /**
-     * 根据id修改分类信息
+     * 根据填入信息修改分类信息
      * @param category
      * @return
      */
     @PutMapping
     /*
-    localhost:8080/category?id=***&name=***&sort=*** put请求
+    localhost:8080/category put请求
     id,name,sort 封装成category json格式
     前端返回只需要确认修改是否成功，返回R<String>
     */
@@ -94,5 +97,27 @@ public class CategoryController {
         log.info("修改分类信息：{]",category.getId());
         categoryService.updateById(category);
         return R.success("修改分类成功");
+    }
+
+    /**
+     * 根据条件查询分类数据
+     * @param category
+     * @return
+     */
+    @GetMapping("/list")
+    /*
+    localhost:8080/category/list?type=*** get请求
+    type 封装成category
+    前端返回需要获取多个Category，返回R<List<Category>>
+    */
+    public R<List<Category>> list(Category category){
+        //条件构造
+        LambdaQueryWrapper<Category> queryWrapper=new LambdaQueryWrapper<>();
+        //添加条件
+        queryWrapper.eq(category.getType()!=null,Category::getType,category.getType());
+        //添加排序
+        queryWrapper.orderByAsc(Category::getSort).orderByDesc(Category::getUpdateTime);
+        List<Category> list = categoryService.list(queryWrapper);
+        return R.success(list);
     }
 }
