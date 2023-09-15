@@ -6,11 +6,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author PJQ
- * 配置mybatis-plus的分页插件
+ * 配置MP的分页插件
  */
 @Configuration
 public class MybatisPlusConfig {
+
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor(){
         MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();

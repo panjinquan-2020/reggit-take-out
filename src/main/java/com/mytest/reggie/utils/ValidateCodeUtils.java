@@ -1,9 +1,8 @@
-package com.mytest.reggie.common;
+package com.mytest.reggie.utils;
 
 import java.util.Random;
 
 /**
- * @author PJQ
  * 随机生成验证码工具类
  */
 public class ValidateCodeUtils {

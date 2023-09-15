@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 /**
  * 用户信息
- * @author PJQ
  */
 @Data
 public class User implements Serializable {

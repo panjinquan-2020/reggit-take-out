@@ -1,4 +1,4 @@
-package com.mytest.reggie.common;
+package com.mytest.reggie.utils;
 
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
@@ -8,7 +8,6 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 
 /**
- * @author PJQ
  * 短信发送工具类
  */
 public class SMSUtils {
@@ -21,7 +20,7 @@ public class SMSUtils {
 	 * @param param 参数
 	 */
 	public static void sendMessage(String signName, String templateCode,String phoneNumbers,String param){
-		DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", "LTAI5t6u7a7s19F83UoZjney", "xG0dUi8xixhW7uRspH74qifdYPhuLf");
+		DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", "", "");
 		IAcsClient client = new DefaultAcsClient(profile);
 
 		SendSmsRequest request = new SendSmsRequest();

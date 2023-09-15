@@ -12,161 +12,152 @@ import com.mytest.reggie.service.CategoryService;
 import com.mytest.reggie.service.SetmealDishService;
 import com.mytest.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @author PJQ
  * 套餐管理
  */
-@Slf4j
+
 @RestController
-@RequestMapping("setmeal")
+@RequestMapping("/setmeal")
+@Slf4j
 public class SetmealController {
+
     @Autowired
     private SetmealService setmealService;
-    @Autowired
-    private SetmealDishService setmealDishService;
+
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private SetmealDishService setmealDishService;
+
     /**
-     * 添加套餐
+     * 新增套餐
      * @param setmealDto
      * @return
      */
     @PostMapping
-    /*
-    localhost:8080/setmeal post请求
-    值太多 不仅有setmeal_dish表中的数据还有category的数据，将二者整合成dishDto类
-    前端返回只需要确认添加是否成功 返回R<String>
-    */
     public R<String> save(@RequestBody SetmealDto setmealDto){
-        log.info("获取套餐信息：{}"+setmealDto.toString());
-        setmealService.saveWithDish(setmealDto);
-        return R.success("新增成功");
-    }
-    @GetMapping("/page")
-    /*
-    localhost:8080/setmeal/page?page=***&pagesize=***&name=*** get请求
-    page,pagesize name可能会输入（有搜索框）
-    由于分页采用的是mybatis-plus的分页方式，所以返回的类型为R<Page>
-    */
-    public R<Page> page(int page, int pageSize, String name){
-        //构建分页构造器
-        Page<Setmeal> pageinfo=new Page(page,pageSize);
-        Page<SetmealDto> setmealDtoPage=new Page<>();
+        log.info("套餐信息：{}",setmealDto);
 
-        //条件构造器
-        LambdaQueryWrapper<Setmeal> queryWrapper=new LambdaQueryWrapper<>();
-        //添加过滤条件
-        queryWrapper.like(name!=null,Setmeal::getName,name);
-        //添加排序条件
-        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
-        //执行分页查询
-        setmealService.page(pageinfo,queryWrapper);
-        //对象拷贝
-        BeanUtils.copyProperties(pageinfo,setmealDtoPage,"records");
-        List<Setmeal> records=pageinfo.getRecords();
-        List<SetmealDto> list=records.stream().map((item)->{
-            SetmealDto setmealDto=new SetmealDto();
-            BeanUtils.copyProperties(item,setmealDto);
-            Long categoryId = item.getCategoryId();
-            Category category = categoryService.getById(categoryId);
-            String categoryName=category.getName();
-            setmealDto.setCategoryName(categoryName);
-            return setmealDto;
-        }).collect(Collectors.toList());
-        setmealDtoPage.setRecords(list);
-        return R.success(setmealDtoPage);
+        setmealService.saveWithDish(setmealDto);
+
+        return R.success("新增套餐成功");
     }
 
     /**
-     * 根据ids进行删除以及批量删除
+     * 套餐分页查询
+     * @param page
+     * @param pageSize
+     * @param name
+     * @return
+     */
+    @GetMapping("/page")
+    public R<Page> page(int page,int pageSize,String name){
+        //分页构造器对象
+        Page<Setmeal> pageInfo = new Page<>(page,pageSize);
+        Page<SetmealDto> dtoPage = new Page<>();
+
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        //添加查询条件，根据name进行like模糊查询
+        queryWrapper.like(name != null,Setmeal::getName,name);
+        //添加排序条件，根据更新时间降序排列
+        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
+
+        setmealService.page(pageInfo,queryWrapper);
+
+        //对象拷贝
+        BeanUtils.copyProperties(pageInfo,dtoPage,"records");
+        List<Setmeal> records = pageInfo.getRecords();
+
+        List<SetmealDto> list = records.stream().map((item) -> {
+            SetmealDto setmealDto = new SetmealDto();
+            //对象拷贝
+            BeanUtils.copyProperties(item,setmealDto);
+            //分类id
+            Long categoryId = item.getCategoryId();
+            //根据分类id查询分类对象
+            Category category = categoryService.getById(categoryId);
+            if(category != null){
+                //分类名称
+                String categoryName = category.getName();
+                setmealDto.setCategoryName(categoryName);
+            }
+            return setmealDto;
+        }).collect(Collectors.toList());
+
+        dtoPage.setRecords(list);
+        return R.success(dtoPage);
+    }
+
+    /**
+     * 删除套餐
      * @param ids
      * @return
      */
     @DeleteMapping
-    /*
-    localhost:8080/setmeal?ids=***,***,... delete请求
-    ids 可以封装成一个List<Long>
-    前端返回只需要确认删除是否成功，返回R<String>
-    */
-    public R<String> delete(String ids){
-        String[] idList = ids.split(",");
-        List<Long> setmealList=new ArrayList<>();
-        for(String id:idList){
-            setmealList.add(Long.valueOf(id));
-        }
-        setmealService.removeWithDish(setmealList);
-        return R.success("删除套餐成功");
+    public R<String> delete(@RequestParam List<Long> ids){
+        log.info("ids:{}",ids);
+
+        setmealService.removeWithDish(ids);
+
+        return R.success("套餐数据删除成功");
     }
 
     /**
-     * 根据status对套餐状态进行修改
-     * @param status
-     * @param ids
+     * 根据条件查询套餐数据
+     * @param setmeal
      * @return
      */
-    @PostMapping("/status/{status}")
-    /*
-    localhost:8080/setmeal/status?ids=***,***,... post请求
-    status是绑定的占位符 ids 可以封装成一个List<Long>
-    前端返回只需要确认修改状态是否成功，返回R<String>
-    */
-    public R<String> updateStatus(@PathVariable int status,String ids){
-        String[] idList=ids.split(",");
-        List<Setmeal> setmealList=new ArrayList<>();
-        for (String id:idList){
-            Setmeal setmeal=new Setmeal();
-            setmeal.setId(Long.valueOf(id));
-            setmeal.setStatus(status);
-            setmealList.add(setmeal);
-        }
-        setmealService.updateBatchById(setmealList);
-        /*if (status==0){
-            return R.success("批量停售成功");
-        }else if (status==1){
-            return R.success("批量启售成功");
-        }
-        return null;*/
-        return status==0?R.success("批量停售成功"):R.success("批量起售成功");
-    }
+    @GetMapping("/list")
+    public R<List<Setmeal>> list(Setmeal setmeal){
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(setmeal.getCategoryId() != null,Setmeal::getCategoryId,setmeal.getCategoryId());
+        queryWrapper.eq(setmeal.getStatus() != null,Setmeal::getStatus,setmeal.getStatus());
+        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
 
+        List<Setmeal> list = setmealService.list(queryWrapper);
+
+        return R.success(list);
+    }
     /**
-     * 根据id查询套餐信息
+     * 根据id查询菜品信息和对应的口味信息
      * @param id
      * @return
      */
     @GetMapping("/{id}")
-    /*
-    localhost:8080/setmeal/id get请求
-    id是绑定的占位符
-    前端返回需要获取相关信息，返回R<SetmealDto>
-    */
-    public R<SetmealDto> save(@PathVariable Long id){
+    public R<SetmealDto> get(@PathVariable Long id){
+
         SetmealDto setmealDto = setmealService.getByIdWithDish(id);
+
         return R.success(setmealDto);
     }
+    @PostMapping("/status/{status}")
+    public R<String> status(@PathVariable int status,@RequestParam List<Long> ids){
+        log.info("status:{},ids:{}",status,ids);
+        for(Long id:ids){
+            Setmeal setmeal=new Setmeal();
+            if (status==0){
+                setmeal.setStatus(0);
+            }else {
+                setmeal.setStatus(1);
+            }
+            setmeal.setId(id);
+            setmealService.updateById(setmeal);
+        }
+        if (status==1){
+            return R.success("停售成功");
 
-    /**
-     * 根据填入的数据对套餐进行修改
-     * @param setmealDto
-     * @return
-     */
-    @PutMapping
-    /*
-    localhost:8080/setmeal put请求
-    值太多 整合成SetmealDto类
-    前端返回只需要确认修改是否成功 返回R<String>
-    */
-    public R<String> update(@RequestBody SetmealDto setmealDto){
-        setmealService.updateWithDish(setmealDto);
-        return R.success("套餐修改成功");
+        }else {
+            return R.success("起售成功");
+        }
     }
+
 }

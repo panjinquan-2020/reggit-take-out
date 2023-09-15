@@ -4,99 +4,83 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mytest.reggie.common.R;
 import com.mytest.reggie.entity.Category;
-import com.mytest.reggie.entity.Employee;
 import com.mytest.reggie.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * @author PJQ
  * 分类管理
  */
-@Slf4j
 @RestController
 @RequestMapping("/category")
+@Slf4j
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;
+
     /**
      * 新增分类
      * @param category
      * @return
-     * */
+     */
     @PostMapping
-    /*
-    localhost:8080/category post请求
-    name,type,sort 封装成category json格式
-    前端返回只需要确认添加是否成功，返回R<String>
-    */
     public R<String> save(@RequestBody Category category){
         log.info("category:{}",category);
         categoryService.save(category);
         return R.success("新增分类成功");
     }
+
     /**
-     * 套餐信息分页查询
+     * 分页查询
      * @param page
      * @param pageSize
      * @return
-     * */
+     */
     @GetMapping("/page")
-    /*
-    localhost:8080/category/page?page=***&pagesize=*** get请求
-    page,pagesize
-    由于分页采用的是mybatis-plus的分页方式，所以返回的类型为R<Page>
-    */
-    public R<Page> page(int page, int pageSize){
-        log.info("page={}，pagesize={}，name={}",page,pageSize);
-        //构建分页构造器
-        Page pageInfo=new Page(page,pageSize);
-        //构造条件构造器
-        LambdaQueryWrapper<Category> queryWrapper=new LambdaQueryWrapper();
-        queryWrapper.orderByDesc(Category::getUpdateTime);
-        //执行查询
+    public R<Page> page(int page,int pageSize){
+        //分页构造器
+        Page<Category> pageInfo = new Page<>(page,pageSize);
+        //条件构造器
+        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
+        //添加排序条件，根据sort进行排序
+        queryWrapper.orderByAsc(Category::getSort);
+
+        //分页查询
         categoryService.page(pageInfo,queryWrapper);
         return R.success(pageInfo);
     }
 
     /**
      * 根据id删除分类
-     * @param ids
+     * @param id
      * @return
      */
     @DeleteMapping
-    /*
-    localhost:8080/category?ids=*** delete请求
-    ids
-    前端返回只需要确认删除是否成功，返回R<String>
-    */
-    public R<String> delete(Long ids){
-        log.info("删除分类，id为：{}",ids);
-//        categoryService.removeById(ids);
-        //由于有的分类可能已经被某套餐或菜品占用，所以需要对删除进行优化
-        categoryService.remove(ids);
+    public R<String> delete(Long id){
+        log.info("删除分类，id为：{}",id);
+
+        //categoryService.removeById(id);
+        categoryService.remove(id);
+
         return R.success("分类信息删除成功");
     }
 
     /**
-     * 根据填入信息修改分类信息
+     * 根据id修改分类信息
      * @param category
      * @return
      */
     @PutMapping
-    /*
-    localhost:8080/category put请求
-    id,name,sort 封装成category json格式
-    前端返回只需要确认修改是否成功，返回R<String>
-    */
     public R<String> update(@RequestBody Category category){
-        log.info("修改分类信息：{]",category.getId());
+        log.info("修改分类信息：{}",category);
+
         categoryService.updateById(category);
-        return R.success("修改分类成功");
+
+        return R.success("修改分类信息成功");
     }
 
     /**
@@ -105,18 +89,14 @@ public class CategoryController {
      * @return
      */
     @GetMapping("/list")
-    /*
-    localhost:8080/category/list?type=*** get请求
-    type 封装成category
-    前端返回需要获取多个Category，返回R<List<Category>>
-    */
     public R<List<Category>> list(Category category){
-        //条件构造
-        LambdaQueryWrapper<Category> queryWrapper=new LambdaQueryWrapper<>();
+        //条件构造器
+        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         //添加条件
-        queryWrapper.eq(category.getType()!=null,Category::getType,category.getType());
-        //添加排序
+        queryWrapper.eq(category.getType() != null,Category::getType,category.getType());
+        //添加排序条件
         queryWrapper.orderByAsc(Category::getSort).orderByDesc(Category::getUpdateTime);
+
         List<Category> list = categoryService.list(queryWrapper);
         return R.success(list);
     }
