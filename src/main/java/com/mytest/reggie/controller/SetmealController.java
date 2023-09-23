@@ -159,5 +159,9 @@ public class SetmealController {
             return R.success("起售成功");
         }
     }
-
+    @PutMapping
+    public R<String> update(@RequestBody SetmealDto setmealDto){
+        setmealService.updateWithDish(setmealDto);
+        return R.success("套餐数据修改成功");
+    }
 }

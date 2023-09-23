@@ -91,4 +91,38 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
 
         return setmealDto;
     }
+
+    @Override
+    public void updateWithDish(SetmealDto setmealDto) {
+        this.updateById(setmealDto);
+        LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SetmealDish::getSetmealId,setmealDto.getId());
+        System.out.println(setmealDto.getId().toString());
+        setmealDishService.remove(queryWrapper);
+        List<SetmealDish> dishes=setmealDto.getSetmealDishes();
+        dishes=dishes.stream().map((item->{
+            item.setSetmealId(setmealDto.getId());
+            return item;
+        })).collect(Collectors.toList());
+        setmealDishService.saveBatch(dishes);
+
+
+        /*this.updateById(dishDto);
+
+        //清理当前菜品对应口味数据---dish_flavor表的delete操作
+        LambdaQueryWrapper<DishFlavor> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(DishFlavor::getDishId,dishDto.getId());
+
+        dishFlavorService.remove(queryWrapper);
+
+        //添加当前提交过来的口味数据---dish_flavor表的insert操作
+        List<DishFlavor> flavors = dishDto.getFlavors();
+
+        flavors = flavors.stream().map((item) -> {
+            item.setDishId(dishDto.getId());
+            return item;
+        }).collect(Collectors.toList());
+
+        dishFlavorService.saveBatch(flavors);*/
+    }
 }
