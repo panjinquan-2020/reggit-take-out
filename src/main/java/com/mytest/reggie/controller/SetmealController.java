@@ -8,7 +8,9 @@ import com.mytest.reggie.dto.SetmealDto;
 import com.mytest.reggie.entity.Category;
 import com.mytest.reggie.entity.Dish;
 import com.mytest.reggie.entity.Setmeal;
+import com.mytest.reggie.entity.SetmealDish;
 import com.mytest.reggie.service.CategoryService;
+import com.mytest.reggie.service.DishService;
 import com.mytest.reggie.service.SetmealDishService;
 import com.mytest.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,8 @@ public class SetmealController {
 
     @Autowired
     private SetmealDishService setmealDishService;
+    @Autowired
+    private DishService dishService;
 
     /**
      * 新增套餐
@@ -46,7 +50,7 @@ public class SetmealController {
      * @return
      */
     @PostMapping
-    @CacheEvict(value = "setmealCache",allEntries = true)
+    //@CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> save(@RequestBody SetmealDto setmealDto){
         log.info("套餐信息：{}",setmealDto);
 
@@ -106,7 +110,7 @@ public class SetmealController {
      * @return
      */
     @DeleteMapping
-    @CacheEvict(value = "setmealCache",allEntries = true)
+    //@CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> delete(@RequestParam List<Long> ids){
         log.info("ids:{}",ids);
 
@@ -121,7 +125,7 @@ public class SetmealController {
      * @return
      */
     @GetMapping("/list")
-    @Cacheable(value = "setmealCache",key = "#setmeal.getCategoryId+'_'+#setmeal.status")
+    //@Cacheable(value = "setmealCache",key = "#setmeal.getCategoryId+'_'+#setmeal.status")
     public R<List<Setmeal>> list(Setmeal setmeal){
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(setmeal.getCategoryId() != null,Setmeal::getCategoryId,setmeal.getCategoryId());
@@ -174,5 +178,24 @@ public class SetmealController {
     public R<String> update(@RequestBody SetmealDto setmealDto){
         setmealService.updateWithDish(setmealDto);
         return R.success("套餐数据修改成功");
+    }
+
+    @GetMapping("/dish/{id}")
+    public R<List<DishDto>> getDish(@PathVariable Long id){
+        LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SetmealDish::getSetmealId,id);
+        //获取套餐里面的所有菜品  这个就是SetmealDish表里面的数据
+        List<SetmealDish> list = setmealDishService.list(queryWrapper);
+        List<DishDto> dishDtoList = list.stream().map((setmealDish) -> {
+            DishDto dishDto = new DishDto();
+            //其实这个BeanUtils的拷贝是浅拷贝，这里要注意一下
+            BeanUtils.copyProperties(setmealDish, dishDto);
+            //这里是为了把套餐中的菜品的基本信息填充到dto中，比如菜品描述，菜品图片等菜品的基本信息
+            Long dishId = setmealDish.getDishId();
+            Dish dish = dishService.getById(dishId);
+            BeanUtils.copyProperties(dish, dishDto);
+            return dishDto;
+        }).collect(Collectors.toList());
+        return R.success(dishDtoList);
     }
 }
